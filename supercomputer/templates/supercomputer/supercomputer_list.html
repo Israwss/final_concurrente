@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supercomputers</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Título principal -->
+        <h1 class="text-center text-primary mb-4">Supercomputers</h1>
+        
+        <!-- Botón para agregar -->
+        <div class="text-end mb-3">
+            <a href="{% url 'add_supercomputer' %}" class="btn btn-success">Add Supercomputer</a>
+        </div>
+
+        <!-- Tabla de Supercomputadoras -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Country</th>
+                        <th>Cores</th>
+                        <th>RAM (GB)</th>
+                        <th>Storage (TB)</th>
+                        <th>Teraflops</th>
+                        <th>Operating System</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for supercomputer in supercomputers %}
+                    <tr>
+                        <td>{{ supercomputer.name }}</td>
+                        <td>{{ supercomputer.country }}</td>
+                        <td>{{ supercomputer.cores }}</td>
+                        <td>{{ supercomputer.ram }}</td>
+                        <td>{{ supercomputer.storage }}</td>
+                        <td>{{ supercomputer.teraflops }}</td>
+                        <td>{{ supercomputer.operating_system }}</td>
+                        <td>
+                            <a href="{% url 'edit_supercomputer' supercomputer.pk %}" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="{% url 'delete_supercomputer' supercomputer.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this item?');">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No supercomputers available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Lista desplegable para seleccionar el parámetro -->
+        <div class="text-center mb-3">
+            <label for="parameterSelect" class="form-label">Select Parameter to Compare:</label>
+            <select id="parameterSelect" class="form-select w-50 mx-auto">
+                <option value="teraflops">Teraflops</option>
+                <option value="ram">RAM (GB)</option>
+                <option value="storage">Storage (TB)</option>
+                <option value="cores">Cores</option>
+            </select>
+        </div>
+
+        <!-- Botón para mostrar/ocultar el gráfico -->
+        <div class="text-center mb-3">
+            <button class="btn btn-info" onclick="toggleChart()">Show/Hide Performance Chart</button>
+        </div>
+
+        <!-- Gráfico de Comparación -->
+        <div class="card shadow p-4 mb-4 bg-white" id="chartContainer" style="display: none;">
+            <h2 class="text-center text-primary">Supercomputers Performance Comparison</h2>
+            <canvas id="performanceChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Script para el gráfico -->
+    <script>
+        // Datos de ejemplo (modifica según tus datos de Django)
+        const supercomputers = [
+            {% for supercomputer in supercomputers %}
+            {
+                name: "{{ supercomputer.name }}",
+                teraflops: {{ supercomputer.teraflops }},
+                ram: {{ supercomputer.ram }},
+                storage: {{ supercomputer.storage }},
+                cores: {{ supercomputer.cores }}
+            },
+            {% endfor %}
+        ];
+
+        // Función para mostrar/ocultar el gráfico
+        function toggleChart() {
+            const chartContainer = document.getElementById('chartContainer');
+            chartContainer.style.display = chartContainer.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Función para actualizar el gráfico
+        function updateChart(parameter) {
+            const labels = supercomputers.map(sc => sc.name);
+            const data = supercomputers.map(sc => sc[parameter]);
+            const colors = [
+                'rgba(255, 99, 132, 0.7)', // Rojo
+                'rgba(54, 162, 235, 0.7)', // Azul
+                'rgba(255, 206, 86, 0.7)', // Amarillo
+                'rgba(75, 192, 192, 0.7)'  // Verde
+            ];
+
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.data.datasets[0].backgroundColor = colors;
+            chart.data.datasets[0].borderColor = colors.map(color => color.replace('0.7', '1'));
+            chart.update();
+        }
+
+        // Configuración inicial del gráfico
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: supercomputers.map(sc => sc.name),
+                datasets: [{
+                    data: supercomputers.map(sc => sc.teraflops),
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 10
+                        },
+                        grid: {
+                            color: 'rgba(200, 200, 200, 0.2)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Evento para cambiar el parámetro del gráfico
+        document.getElementById('parameterSelect').addEventListener('change', function() {
+            updateChart(this.value);
+        });
+    </script>
+</body>
+</html>
+
