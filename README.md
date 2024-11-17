@@ -1,4 +1,3 @@
-Here's a README template for your Django project:
 
 ---
 
